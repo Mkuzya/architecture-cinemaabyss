@@ -1,29 +1,85 @@
 @startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-LAYOUT_LEFT_RIGHT()
+AddElementTag("microservice", $fontColor="#FFFFFF", $bgColor="#4169E1", $borderColor="#4169E1", $legendText="Микросервис")
+AddElementTag("database", $fontColor="#FFFFFF", $bgColor="#9370DB", $borderColor="#9370DB", $legendText="База данных")
+AddElementTag("messageBroker", $fontColor="#FFFFFF", $bgColor="#FF6347", $borderColor="#FF6347", $legendText="Kafka")
+AddElementTag("external", $fontColor="#FFFFFF", $bgColor="#2E8B57", $borderColor="#2E8B57", $legendText="Внешний сервис")
+AddElementTag("gateway", $fontColor="#FFFFFF", $bgColor="#DA70D6", $borderColor="#DA70D6", $legendText="API Gateway")
 
-Person(user, "Пользователь", "Web/Mobile/TV клиенты")
+title "Архитектура "Кинбездна" TO-BE"
 
-System_Boundary(ca, "CinemaAbyss Platform"){
-  Container_Boundary(gw, "API Gateway / Proxy"){
-    Container(proxy, "Proxy Service", "Go", "Strangler Fig routing, Feature Flag percent switch")
-  }
+Person(user, "Пользователь", "Смотрит фильмы, управляет подписками")
 
-  Container(monolith, "Monolith", "Go", "Users, Payments, Subscriptions, Movies (legacy)")
-  Container(movies, "Movies Service", "Go", "Metadata for movies")
-  Container(events, "Events Service", "Go", "Kafka producer/consumer for movie/user/payment events")
+System_Ext(recommendationSystem, "Рекомендательная система", "Внешний сервис рекомендаций")
+System_Ext(paymentProviders, "Платежные системы", "Visa/Mastercard/МИР")
 
-  ContainerDb(db, "PostgreSQL", "Relational", "Single DB instance")
-  Container(kafka, "Kafka", "Broker", "Async events bus")
+System_Boundary(cinemaSystem, "Кинобездна") {
+    ' Клиентские приложения
+    Container(webApp, "Веб-приложение", "React", "Адаптивный интерфейс")
+    Container(mobileApp, "Мобильное приложение", "React Native", "iOS/Android")
+    Container(tvApp, "TV приложение", "Android TV", "Для Smart TV")
+    
+    ' API Gateway
+    Container(apiGateway, "API Gateway", "NGINX + Envoy", "Единая точка входа, маршрутизация", $tags="gateway")
+    
+    ' Основные сервисы
+    Container(moviesService, "Movies Service", "Go", "Метаданные фильмов, рейтинги, жанры", $tags="microservice")
+    Container(usersService, "Users Service", "Go", "Аутентификация, профили пользователей", $tags="microservice")
+    Container(subscriptionsService, "Subscriptions Service", "Go", "Управление подписками", $tags="microservice")
+    Container(paymentsService, "Payments Service", "Go", "Обработка платежей", $tags="microservice")
+    Container(eventsService, "Events Service", "Go", "Обработка событий через Kafka", $tags="microservice")
+    
+    ' Базы данных
+    ContainerDb(moviesDB, "БД Movies", "PostgreSQL", "Фильмы, актеры, жанры, рейтинги", $tags="database")
+    ContainerDb(usersDB, "БД Users", "PostgreSQL", "Данные пользователей", $tags="database")
+    ContainerDb(subscriptionsDB, "БД Subscriptions", "PostgreSQL", "Подписки, скидки", $tags="database")
+    ContainerDb(paymentsDB, "БД Payments", "PostgreSQL", "Транзакции, история платежей", $tags="database")
+    
+    ' Инфраструктура
+    Container(kafka, "Kafka Cluster", "Apache Kafka", "Шина событий (топики: user_events, payment_events, movie_events)", $tags="messageBroker")
 }
 
-Rel(user, proxy, "HTTPS")
-Rel(proxy, monolith, "HTTP REST")
-Rel(proxy, movies, "HTTP REST (feature-flag %) ")
-Rel(monolith, db, "SQL")
-Rel(movies, db, "SQL")
-Rel(events, kafka, "produce/consume")
+' Связи пользователей
+Rel(user, webApp, "Смотрит фильмы", "HTTPS")
+Rel(user, mobileApp, "Управляет подпиской", "HTTPS")
+Rel(user, tvApp, "Смотрит фильмы", "HTTPS")
 
+' Связи клиентов с API Gateway
+Rel(webApp, apiGateway, "API запросы", "REST/HTTPS")
+Rel(mobileApp, apiGateway, "API запросы", "REST/HTTPS")
+Rel(tvApp, apiGateway, "API запросы", "REST/HTTPS")
+
+' Связи API Gateway с сервисами
+Rel(apiGateway, moviesService, "/api/movies", "gRPC")
+Rel(apiGateway, usersService, "/api/users", "gRPC")
+Rel(apiGateway, subscriptionsService, "/api/subscriptions", "gRPC")
+Rel(apiGateway, paymentsService, "/api/payments", "gRPC")
+Rel(apiGateway, eventsService, "/api/events", "gRPC")
+
+' Связи сервисов с БД
+Rel(moviesService, moviesDB, "Чтение/запись", "SQL")
+Rel(usersService, usersDB, "Чтение/запись", "SQL")
+Rel(subscriptionsService, subscriptionsDB, "Чтение/запись", "SQL")
+Rel(paymentsService, paymentsDB, "Чтение/запись", "SQL")
+
+' Внешние интеграции
+Rel(paymentsService, paymentProviders, "Обработка платежей", "REST/HTTPS")
+Rel(moviesService, recommendationSystem, "Получение рекомендаций", "REST/HTTPS")
+
+' Событийная архитектура
+Rel(usersService, kafka, "Публикует user_events", "Kafka")
+Rel(paymentsService, kafka, "Публикует payment_events", "Kafka")
+Rel(moviesService, kafka, "Публикует movie_events", "Kafka")
+Rel(eventsService, kafka, "Подписывается на все топики", "Kafka")
+
+legend right
+  **Чистая To-Be архитектура:**
+  1. Полностью декомпозированный монолит
+  2. Каждый сервис имеет свою БД
+  3. API Gateway как единая точка входа
+  4. Событийная архитектура на Kafka
+  5. Нет легаси-компонентов
+end legend
 @enduml
-

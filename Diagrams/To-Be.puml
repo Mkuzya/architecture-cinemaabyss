@@ -1,0 +1,29 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_LEFT_RIGHT()
+
+Person(user, "Пользователь", "Web/Mobile/TV клиенты")
+
+System_Boundary(ca, "CinemaAbyss Platform"){
+  Container_Boundary(gw, "API Gateway / Proxy"){
+    Container(proxy, "Proxy Service", "Go", "Strangler Fig routing, Feature Flag percent switch")
+  }
+
+  Container(monolith, "Monolith", "Go", "Users, Payments, Subscriptions, Movies (legacy)")
+  Container(movies, "Movies Service", "Go", "Metadata for movies")
+  Container(events, "Events Service", "Go", "Kafka producer/consumer for movie/user/payment events")
+
+  ContainerDb(db, "PostgreSQL", "Relational", "Single DB instance")
+  Container(kafka, "Kafka", "Broker", "Async events bus")
+}
+
+Rel(user, proxy, "HTTPS")
+Rel(proxy, monolith, "HTTP REST")
+Rel(proxy, movies, "HTTP REST (feature-flag %) ")
+Rel(monolith, db, "SQL")
+Rel(movies, db, "SQL")
+Rel(events, kafka, "produce/consume")
+
+@enduml
+

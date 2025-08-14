@@ -2,7 +2,14 @@
 
 # Задание 1
 
+<<<<<<< HEAD
 1. [AS-IS]([ссылка](https://github.com/Mkuzya/architecture-cinemaabyss/blob/dev/Diagrams/As-Is.png))
+=======
+1. Спроектируйте to be архитектуру КиноБездны, разделив всю систему на отдельные домены и организовав интеграционное взаимодействие и единую точку вызова сервисов.
+Результат представьте в виде контейнерной диаграммы в нотации С4.
+Добавьте ссылку на файл в этот шаблон
+[As-Is диаграмма](./Diagrams/As-Is.png), [To-Be (C4 контейнеры)](./Diagrams/To-Be.png)
+>>>>>>> 71f40f1 (feat(proxy): add Go proxy service with Strangler Fig routing and Dockerfile)
 
 # Задание 2
 

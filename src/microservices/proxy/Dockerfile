@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 proxy-service:
     build:
       context: ./src/microservices/proxy
@@ -19,3 +20,25 @@ proxy-service:
       MOVIES_MIGRATION_PERCENT: "50" # процент миграции
     networks:
       - cinemaabyss-network
+=======
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /app
+
+COPY go.mod .
+
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o proxy-service .
+
+FROM alpine:latest
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+COPY --from=builder /app/proxy-service .
+EXPOSE 8000
+CMD ["./proxy-service"]
+
+
+>>>>>>> 71f40f1 (feat(proxy): add Go proxy service with Strangler Fig routing and Dockerfile)

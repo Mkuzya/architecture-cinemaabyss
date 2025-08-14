@@ -53,10 +53,18 @@ func initDB() {
 		log.Fatal(err)
 	}
 
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
+        // Retry until DB becomes available
+        maxWait := 30 * time.Second
+        start := time.Now()
+        for {
+                if err = db.Ping(); err == nil {
+                        break
+                }
+                if time.Since(start) > maxWait {
+                        log.Fatal(err)
+                }
+                time.Sleep(1 * time.Second)
+        }
 	log.Println("Successfully connected to database")
 }
 

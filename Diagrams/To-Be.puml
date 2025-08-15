@@ -2,13 +2,14 @@
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-AddElementTag("microservice", $fontColor="#FFFFFF", $bgColor="#4169E1", $borderColor="#4169E1", $legendText="Микросервис")
-AddElementTag("database", $fontColor="#FFFFFF", $bgColor="#9370DB", $borderColor="#9370DB", $legendText="База данных")
-AddElementTag("messageBroker", $fontColor="#FFFFFF", $bgColor="#FF6347", $borderColor="#FF6347", $legendText="Kafka")
-AddElementTag("external", $fontColor="#FFFFFF", $bgColor="#2E8B57", $borderColor="#2E8B57", $legendText="Внешний сервис")
-AddElementTag("gateway", $fontColor="#FFFFFF", $bgColor="#DA70D6", $borderColor="#DA70D6", $legendText="API Gateway")
+AddElementTag("microservice", $fontColor="#FFFFFF", $bgColor="#4169E1", $borderColor="#4169E1")
+AddElementTag("database", $fontColor="#FFFFFF", $bgColor="#9370DB", $borderColor="#9370DB")
+AddElementTag("messageBroker", $fontColor="#FFFFFF", $bgColor="#FF6347", $borderColor="#FF6347")
+AddElementTag("external", $fontColor="#FFFFFF", $bgColor="#2E8B57", $borderColor="#2E8B57")
+AddElementTag("gateway", $fontColor="#FFFFFF", $bgColor="#DA70D6", $borderColor="#DA70D6")
+AddElementTag("k8s", $fontColor="#000000", $bgColor="#F5DEB3", $borderColor="#D2B48C")
 
-title "Архитектура "Кинбездна" TO-BE"
+title "Архитектура «Кинобездна» (Kubernetes)"
 
 Person(user, "Пользователь", "Смотрит фильмы, управляет подписками")
 
@@ -21,24 +22,24 @@ System_Boundary(cinemaSystem, "Кинобездна") {
     Container(mobileApp, "Мобильное приложение", "React Native", "iOS/Android")
     Container(tvApp, "TV приложение", "Android TV", "Для Smart TV")
     
-    ' API Gateway
-    Container(apiGateway, "API Gateway", "NGINX + Envoy", "Единая точка входа, маршрутизация", $tags="gateway")
+    ' Kubernetes Ingress + API Gateway
+    Container(ingressGateway, "Ingress + API Gateway", "NGINX Ingress + Envoy", "Маршрутизация и балансировка нагрузки", $tags="gateway")
     
     ' Основные сервисы
-    Container(moviesService, "Movies Service", "Go", "Метаданные фильмов, рейтинги, жанры", $tags="microservice")
-    Container(usersService, "Users Service", "Go", "Аутентификация, профили пользователей", $tags="microservice")
-    Container(subscriptionsService, "Subscriptions Service", "Go", "Управление подписками", $tags="microservice")
-    Container(paymentsService, "Payments Service", "Go", "Обработка платежей", $tags="microservice")
-    Container(eventsService, "Events Service", "Go", "Обработка событий через Kafka", $tags="microservice")
+    Container(moviesService, "Movies Service", "Go", "Метаданные фильмов, рейтинги, жанры", $tags="microservice,k8s")
+    Container(usersService, "Users Service", "Go", "Аутентификация, профили пользователей", $tags="microservice,k8s")
+    Container(subscriptionsService, "Subscriptions Service", "Go", "Управление подписками", $tags="microservice,k8s")
+    Container(paymentsService, "Payments Service", "Go", "Обработка платежей", $tags="microservice,k8s")
+    Container(eventsService, "Events Service", "Go", "Обработка событий через Kafka", $tags="microservice,k8s")
     
     ' Базы данных
-    ContainerDb(moviesDB, "БД Movies", "PostgreSQL", "Фильмы, актеры, жанры, рейтинги", $tags="database")
-    ContainerDb(usersDB, "БД Users", "PostgreSQL", "Данные пользователей", $tags="database")
-    ContainerDb(subscriptionsDB, "БД Subscriptions", "PostgreSQL", "Подписки, скидки", $tags="database")
-    ContainerDb(paymentsDB, "БД Payments", "PostgreSQL", "Транзакции, история платежей", $tags="database")
+    ContainerDb(moviesDB, "БД Movies", "PostgreSQL (StatefulSet)", "Фильмы, актеры, жанры, рейтинги", $tags="database")
+    ContainerDb(usersDB, "БД Users", "PostgreSQL (StatefulSet)", "Данные пользователей", $tags="database")
+    ContainerDb(subscriptionsDB, "БД Subscriptions", "PostgreSQL (StatefulSet)", "Подписки, скидки", $tags="database")
+    ContainerDb(paymentsDB, "БД Payments", "PostgreSQL (StatefulSet)", "Транзакции, история платежей", $tags="database")
     
-    ' Инфраструктура
-    Container(kafka, "Kafka Cluster", "Apache Kafka", "Шина событий (топики: user_events, payment_events, movie_events)", $tags="messageBroker")
+    ' Kafka
+    Container(kafka, "Kafka Cluster", "Apache Kafka (StatefulSet)", "Шина событий", $tags="messageBroker")
 }
 
 ' Связи пользователей
@@ -46,17 +47,22 @@ Rel(user, webApp, "Смотрит фильмы", "HTTPS")
 Rel(user, mobileApp, "Управляет подпиской", "HTTPS")
 Rel(user, tvApp, "Смотрит фильмы", "HTTPS")
 
-' Связи клиентов с API Gateway
-Rel(webApp, apiGateway, "API запросы", "REST/HTTPS")
-Rel(mobileApp, apiGateway, "API запросы", "REST/HTTPS")
-Rel(tvApp, apiGateway, "API запросы", "REST/HTTPS")
+' Связи клиентов с Ingress
+Rel(webApp, ingressGateway, "API запросы", "HTTPS")
+Rel(mobileApp, ingressGateway, "API запросы", "HTTPS")
+Rel(tvApp, ingressGateway, "API запросы", "HTTPS")
 
-' Связи API Gateway с сервисами
-Rel(apiGateway, moviesService, "/api/movies", "gRPC")
-Rel(apiGateway, usersService, "/api/users", "gRPC")
-Rel(apiGateway, subscriptionsService, "/api/subscriptions", "gRPC")
-Rel(apiGateway, paymentsService, "/api/payments", "gRPC")
-Rel(apiGateway, eventsService, "/api/events", "gRPC")
+' Связи Ingress с сервисами
+Rel(ingressGateway, moviesService, "/api/movies", "gRPC (via k8s Service)")
+Rel(ingressGateway, usersService, "/api/users", "gRPC (via k8s Service)")
+Rel(ingressGateway, subscriptionsService, "/api/subscriptions", "gRPC (via k8s Service)")
+Rel(ingressGateway, paymentsService, "/api/payments", "gRPC (via k8s Service)")
+Rel(ingressGateway, eventsService, "/api/events", "gRPC (via k8s Service)")
+
+' Внутренние gRPC-связи
+Rel(moviesService, usersService, "Запросы пользователей", "gRPC")
+Rel(subscriptionsService, paymentsService, "Проверка платежей", "gRPC")
+Rel(eventsService, moviesService, "Обновление рейтингов", "gRPC")
 
 ' Связи сервисов с БД
 Rel(moviesService, moviesDB, "Чтение/запись", "SQL")
@@ -73,13 +79,4 @@ Rel(usersService, kafka, "Публикует user_events", "Kafka")
 Rel(paymentsService, kafka, "Публикует payment_events", "Kafka")
 Rel(moviesService, kafka, "Публикует movie_events", "Kafka")
 Rel(eventsService, kafka, "Подписывается на все топики", "Kafka")
-
-legend right
-  **Чистая To-Be архитектура:**
-  1. Полностью декомпозированный монолит
-  2. Каждый сервис имеет свою БД
-  3. API Gateway как единая точка входа
-  4. Событийная архитектура на Kafka
-  5. Нет легаси-компонентов
-end legend
 @enduml

@@ -2,7 +2,7 @@
 
 # Задание 1
 
-1. [TO-BE]([(https://github.com/Mkuzya/architecture-cinemaabyss/blob/dev/Diagrams/TO-BE.png)])
+1. [TO-BE](https://github.com/Mkuzya/architecture-cinemaabyss/blob/dev/Diagrams/TO-BE.png)
 
 # Задание 2
 

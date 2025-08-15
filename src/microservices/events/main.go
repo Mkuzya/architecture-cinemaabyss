@@ -62,7 +62,7 @@ func (s *eventService) produceAndConsume(topic string, payload []byte) error {
     }
     defer writer.Close()
 
-    wctx, wcancel := context.WithTimeout(context.Background(), 10*time.Second)
+    wctx, wcancel := context.WithTimeout(context.Background(), 30*time.Second)
     defer wcancel()
     if err := writer.WriteMessages(wctx, kafka.Message{Value: payload}); err != nil {
         return err
@@ -79,7 +79,7 @@ func (s *eventService) produceAndConsume(topic string, payload []byte) error {
     })
     defer reader.Close()
 
-    rctx, rcancel := context.WithTimeout(context.Background(), 3*time.Second)
+    rctx, rcancel := context.WithTimeout(context.Background(), 10*time.Second)
     defer rcancel()
     msg, err := reader.ReadMessage(rctx)
     if err != nil {

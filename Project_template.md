@@ -2,7 +2,8 @@
 
 # Задание 1
 
-1. [TO-BE](https://github.com/Mkuzya/architecture-cinemaabyss/blob/dev/Diagrams/TO-BE.png)
+1. [TO-BE - Целевое состояние](./Diagrams/To-Be.png)
+2. [TO-BE - Переходный период (Strangler Fig)](./Diagrams/To-Be-Transition.png)
 
 # Задание 2
 
@@ -54,7 +55,28 @@
     - Добавьте в docker-compose новый сервис, kafka там уже есть
 
 Необходимые тесты для проверки этого API вызываются при запуске npm run test:local из папки tests/postman 
-Приложите скриншот тестов и скриншот состояния топиков Kafka из UI http://localhost:8090 
+Приложите скриншот тестов и скриншот состояния топиков Kafka из UI http://localhost:8090
+
+**Результаты тестирования:**
+
+Все тесты прошли успешно:
+```
+Newman run completed!
+Total requests: 22
+Failed requests: 0
+Total assertions: 42
+Failed assertions: 0
+```
+
+Логи Events Service после тестирования:
+```
+2025/08/15 17:06:05 Produced to movie-events: {"movie_id":12,"title":"Test Movie Event","action":"viewed","user_id":7,"timestamp":"2025-08-15T17:06:03Z"}
+2025/08/15 17:06:05 Consumed from movie-events: {"movie_id":8,"title":"Test Movie Event","action":"viewed","user_id":5,"timestamp":"2025-08-15T16:53:12Z"}
+2025/08/15 17:06:15 Produced to user-events: {"user_id":7,"username":"testuser","action":"logged_in","timestamp":"2025-08-15T17:06:14.225Z"}
+2025/08/15 17:06:15 Consumed from user-events: {"user_id":5,"username":"testuser","action":"logged_in","timestamp":"2025-08-15T16:53:22.425Z"}
+2025/08/15 17:06:25 Produced to payment-events: {"payment_id":7,"user_id":7,"amount":9.99,"status":"completed","timestamp":"2025/08/15T17:06:24.541Z","method_type":"credit_card"}
+2025/08/15 17:06:25 Consumed from payment-events: {"payment_id":5,"user_id":5,"amount":9.99,"status":"completed","timestamp":"2025-08-15T16:53:32.592Z","method_type":"credit_card"}
+``` 
 
 # Задание 3
 
@@ -347,9 +369,77 @@ minikube tunnel
 https://cinemaabyss.example.com/api/movies
 и приложите скриншот развертывания helm и вывода https://cinemaabyss.example.com/api/movies
 
+**Результаты тестирования через Ingress:**
+
+Успешно настроен Ingress для домена cinemaabyss.example.com:
+
+```bash
+# Тестирование через Ingress с доменом
+curl -H "Host: cinemaabyss.example.com" http://localhost:8080/api/movies
+# Ответ: [{"id":1,"title":"The Shawshank Redemption",...}]
+
+curl -H "Host: cinemaabyss.example.com" http://localhost:8080/api/users  
+# Ответ: [{"id":1,"username":"user1","email":"user1@example.com"},...]
+```
+
+Ingress конфигурация работает корректно:
+- Домен cinemaabyss.example.com настроен
+- Маршрутизация на proxy-service работает
+- API Gateway функционирует через Ingress
+
 ## Удаляем все
 
 ```bash
 kubectl delete all --all -n cinemaabyss
 kubectl delete namespace cinemaabyss
+```
+
+---
+
+### Задание 3 - CI/CD и Kubernetes
+
+**CI/CD Pipeline:**
+- GitHub Actions workflow настроен и работает
+- Автоматическая сборка Docker образов при push в dev ветку
+- Публикация образов в GitHub Container Registry
+
+**Kubernetes Deployment:**
+- Все сервисы успешно развернуты в Minikube кластере
+- PostgreSQL, Kafka, Zookeeper работают стабильно
+- Микросервисы (proxy, events, movies, monolith) запущены
+- API Gateway функционирует корректно
+
+**Результаты тестирования API:**
+```bash
+# Проверка здоровья
+curl http://localhost:8000/health
+# Ответ: OK
+
+# Список фильмов
+curl http://localhost:8000/api/movies
+# Ответ: [{"id":1,"title":"The Shawshank Redemption",...}]
+
+# Список пользователей
+curl http://localhost:8000/api/users  
+# Ответ: [{"id":1,"username":"user1","email":"user1@example.com"},...]
+```
+
+### Задание 4 - Helm Charts
+
+**Helm Charts:**
+- Созданы Helm чарты для всех сервисов
+- Настроены values.yaml с конфигурацией образов
+- Templates для deployments и services готовы
+- Успешное развертывание через Helm
+
+**Статус подов после Helm установки:**
+```
+NAME                              READY   STATUS    RESTARTS   AGE
+events-service-66c886fb68-jrgjk   1/1     Running   0          10m
+kafka-0                           1/1     Running   0          25m
+monolith-5c4db668fd-rf9pb         1/1     Running   0          40s
+movies-service-59888fd587-5sjgp   1/1     Running   0          35s
+postgres-0                        1/1     Running   0          25m
+proxy-service-d44464dd9-wdqh2     1/1     Running   0          10m
+zookeeper-0                       1/1     Running   0          25m
 ```

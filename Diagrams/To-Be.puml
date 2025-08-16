@@ -1,0 +1,95 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+AddElementTag("microservice", $fontColor="#FFFFFF", $bgColor="#4169E1", $borderColor="#4169E1")
+AddElementTag("database", $fontColor="#FFFFFF", $bgColor="#9370DB", $borderColor="#9370DB")
+AddElementTag("messageBroker", $fontColor="#FFFFFF", $bgColor="#FF6347", $borderColor="#FF6347")
+AddElementTag("external", $fontColor="#FFFFFF", $bgColor="#2E8B57", $borderColor="#2E8B57")
+AddElementTag("gateway", $fontColor="#FFFFFF", $bgColor="#DA70D6", $borderColor="#DA70D6")
+AddElementTag("k8s", $fontColor="#000000", $bgColor="#F5DEB3", $borderColor="#D2B48C")
+
+title "Архитектура «Кинобездна» - Целевое состояние (TO-BE)"
+
+Person(user, "Пользователь", "Смотрит фильмы, управляет подписками")
+
+System_Ext(recommendationSystem, "Рекомендательная система", "Внешний сервис рекомендаций")
+System_Ext(paymentProviders, "Платежные системы", "Visa/Mastercard/МИР")
+
+System_Boundary(cinemaSystem, "Кинобездна") {
+    ' Клиентские приложения
+    Container(webApp, "Веб-приложение", "React", "Адаптивный интерфейс")
+    Container(mobileApp, "Мобильное приложение", "React Native", "iOS/Android")
+    Container(tvApp, "TV приложение", "Android TV", "Для Smart TV")
+    
+    ' API Gateway
+    Container(apiGateway, "API Gateway", "NGINX Ingress + Envoy", "Единая точка входа, маршрутизация, аутентификация", $tags="gateway,k8s")
+    
+    ' Микросервисы
+    Container(moviesService, "Movies Service", "Go", "Метаданные фильмов, рейтинги, жанры", $tags="microservice,k8s")
+    Container(usersService, "Users Service", "Go", "Аутентификация, профили пользователей", $tags="microservice,k8s")
+    Container(subscriptionsService, "Subscriptions Service", "Go", "Управление подписками", $tags="microservice,k8s")
+    Container(paymentsService, "Payments Service", "Go", "Обработка платежей", $tags="microservice,k8s")
+    Container(eventsService, "Events Service", "Go", "Обработка событий через Kafka", $tags="microservice,k8s")
+    Container(analyticsService, "Analytics Service", "Go", "Аналитика и метрики", $tags="microservice,k8s")
+    
+    ' Базы данных
+    ContainerDb(moviesDB, "БД Movies", "PostgreSQL (StatefulSet)", "Фильмы, актеры, жанры, рейтинги", $tags="database")
+    ContainerDb(usersDB, "БД Users", "PostgreSQL (StatefulSet)", "Данные пользователей", $tags="database")
+    ContainerDb(subscriptionsDB, "БД Subscriptions", "PostgreSQL (StatefulSet)", "Подписки, скидки", $tags="database")
+    ContainerDb(paymentsDB, "БД Payments", "PostgreSQL (StatefulSet)", "Транзакции, история платежей", $tags="database")
+    ContainerDb(analyticsDB, "БД Analytics", "ClickHouse (StatefulSet)", "Аналитические данные", $tags="database")
+    
+    ' Kafka
+    Container(kafka, "Kafka Cluster", "Apache Kafka (StatefulSet)", "Шина событий", $tags="messageBroker")
+    
+    ' Кэш
+    Container(redis, "Redis Cache", "Redis (StatefulSet)", "Кэширование сессий и данных", $tags="database")
+}
+
+' Связи пользователей
+Rel(user, webApp, "Смотрит фильмы", "HTTPS")
+Rel(user, mobileApp, "Управляет подпиской", "HTTPS")
+Rel(user, tvApp, "Смотрит фильмы", "HTTPS")
+
+' Связи клиентов с API Gateway
+Rel(webApp, apiGateway, "API запросы", "HTTPS")
+Rel(mobileApp, apiGateway, "API запросы", "HTTPS")
+Rel(tvApp, apiGateway, "API запросы", "HTTPS")
+
+' Связи API Gateway с микросервисами
+Rel(apiGateway, moviesService, "/api/movies", "HTTP")
+Rel(apiGateway, usersService, "/api/users", "HTTP")
+Rel(apiGateway, subscriptionsService, "/api/subscriptions", "HTTP")
+Rel(apiGateway, paymentsService, "/api/payments", "HTTP")
+Rel(apiGateway, eventsService, "/api/events", "HTTP")
+Rel(apiGateway, analyticsService, "/api/analytics", "HTTP")
+
+' Внутренние связи между сервисами
+Rel(moviesService, usersService, "Проверка авторизации", "HTTP")
+Rel(subscriptionsService, paymentsService, "Проверка платежей", "HTTP")
+Rel(analyticsService, moviesService, "Сбор метрик просмотров", "HTTP")
+Rel(analyticsService, usersService, "Сбор метрик пользователей", "HTTP")
+
+' Связи сервисов с БД
+Rel(moviesService, moviesDB, "Чтение/запись", "SQL")
+Rel(usersService, usersDB, "Чтение/запись", "SQL")
+Rel(subscriptionsService, subscriptionsDB, "Чтение/запись", "SQL")
+Rel(paymentsService, paymentsDB, "Чтение/запись", "SQL")
+Rel(analyticsService, analyticsDB, "Запись аналитики", "SQL")
+
+' Кэширование
+Rel(moviesService, redis, "Кэш популярных фильмов", "Redis")
+Rel(usersService, redis, "Кэш сессий", "Redis")
+
+' Внешние интеграции
+Rel(paymentsService, paymentProviders, "Обработка платежей", "REST/HTTPS")
+Rel(moviesService, recommendationSystem, "Получение рекомендаций", "REST/HTTPS")
+
+' Событийная архитектура
+Rel(usersService, kafka, "Публикует user_events", "Kafka")
+Rel(paymentsService, kafka, "Публикует payment_events", "Kafka")
+Rel(moviesService, kafka, "Публикует movie_events", "Kafka")
+Rel(eventsService, kafka, "Подписывается на все топики", "Kafka")
+Rel(analyticsService, kafka, "Подписывается на события", "Kafka")
+@enduml

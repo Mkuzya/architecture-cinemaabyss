@@ -1,0 +1,93 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+AddElementTag("microservice", $fontColor="#FFFFFF", $bgColor="#4169E1", $borderColor="#4169E1")
+AddElementTag("database", $fontColor="#FFFFFF", $bgColor="#9370DB", $borderColor="#9370DB")
+AddElementTag("messageBroker", $fontColor="#FFFFFF", $bgColor="#FF6347", $borderColor="#FF6347")
+AddElementTag("external", $fontColor="#FFFFFF", $bgColor="#2E8B57", $borderColor="#2E8B57")
+AddElementTag("gateway", $fontColor="#FFFFFF", $bgColor="#DA70D6", $borderColor="#DA70D6")
+AddElementTag("monolith", $fontColor="#FFFFFF", $bgColor="#8B4513", $borderColor="#8B4513")
+AddElementTag("k8s", $fontColor="#000000", $bgColor="#F5DEB3", $borderColor="#D2B48C")
+
+title "Архитектура «Кинобездна» - Переходный период (Strangler Fig)"
+
+Person(user, "Пользователь", "Смотрит фильмы, управляет подписками")
+
+System_Ext(recommendationSystem, "Рекомендательная система", "Внешний сервис рекомендаций")
+System_Ext(paymentProviders, "Платежные системы", "Visa/Mastercard/МИР")
+
+System_Boundary(cinemaSystem, "Кинобездна") {
+    ' Клиентские приложения
+    Container(webApp, "Веб-приложение", "React", "Адаптивный интерфейс")
+    Container(mobileApp, "Мобильное приложение", "React Native", "iOS/Android")
+    Container(tvApp, "TV приложение", "Android TV", "Для Smart TV")
+    
+    ' Kubernetes Ingress
+    Container(ingressGateway, "Ingress Gateway", "NGINX Ingress", "Маршрутизация и балансировка нагрузки", $tags="gateway")
+    
+    ' Proxy Service (Strangler Fig)
+    Container(proxyService, "Proxy Service", "Go", "API Gateway с Strangler Fig паттерном\nMOVIES_MIGRATION_PERCENT: 50%", $tags="gateway,k8s")
+    
+    ' Монолитное приложение (легаси)
+    Container(monolith, "Monolith", "Go", "Легаси приложение\n(постепенно выводится из эксплуатации)", $tags="monolith,k8s")
+    
+    ' Новые микросервисы
+    Container(moviesService, "Movies Service", "Go", "Новый микросервис фильмов\n(частично заменяет монолит)", $tags="microservice,k8s")
+    Container(usersService, "Users Service", "Go", "Аутентификация, профили пользователей", $tags="microservice,k8s")
+    Container(subscriptionsService, "Subscriptions Service", "Go", "Управление подписками", $tags="microservice,k8s")
+    Container(paymentsService, "Payments Service", "Go", "Обработка платежей", $tags="microservice,k8s")
+    Container(eventsService, "Events Service", "Go", "Обработка событий через Kafka", $tags="microservice,k8s")
+    
+    ' Базы данных
+    ContainerDb(moviesDB, "БД Movies", "PostgreSQL (StatefulSet)", "Фильмы, актеры, жанры, рейтинги", $tags="database")
+    ContainerDb(usersDB, "БД Users", "PostgreSQL (StatefulSet)", "Данные пользователей", $tags="database")
+    ContainerDb(subscriptionsDB, "БД Subscriptions", "PostgreSQL (StatefulSet)", "Подписки, скидки", $tags="database")
+    ContainerDb(paymentsDB, "БД Payments", "PostgreSQL (StatefulSet)", "Транзакции, история платежей", $tags="database")
+    
+    ' Kafka
+    Container(kafka, "Kafka Cluster", "Apache Kafka (StatefulSet)", "Шина событий", $tags="messageBroker")
+}
+
+' Связи пользователей
+Rel(user, webApp, "Смотрит фильмы", "HTTPS")
+Rel(user, mobileApp, "Управляет подпиской", "HTTPS")
+Rel(user, tvApp, "Смотрит фильмы", "HTTPS")
+
+' Связи клиентов с Ingress
+Rel(webApp, ingressGateway, "API запросы", "HTTPS")
+Rel(mobileApp, ingressGateway, "API запросы", "HTTPS")
+Rel(tvApp, ingressGateway, "API запросы", "HTTPS")
+
+' Связи Ingress с Proxy Service
+Rel(ingressGateway, proxyService, "Все API запросы", "HTTP")
+
+' Связи Proxy Service с сервисами (Strangler Fig)
+Rel(proxyService, monolith, "/api/* (50% трафика)", "HTTP")
+Rel(proxyService, moviesService, "/api/movies (50% трафика)", "HTTP")
+Rel(proxyService, usersService, "/api/users", "HTTP")
+Rel(proxyService, subscriptionsService, "/api/subscriptions", "HTTP")
+Rel(proxyService, paymentsService, "/api/payments", "HTTP")
+Rel(proxyService, eventsService, "/api/events", "HTTP")
+
+' Внутренние связи между сервисами
+Rel(moviesService, usersService, "Проверка авторизации", "HTTP")
+Rel(subscriptionsService, paymentsService, "Проверка платежей", "HTTP")
+
+' Связи сервисов с БД
+Rel(moviesService, moviesDB, "Чтение/запись", "SQL")
+Rel(usersService, usersDB, "Чтение/запись", "SQL")
+Rel(subscriptionsService, subscriptionsDB, "Чтение/запись", "SQL")
+Rel(paymentsService, paymentsDB, "Чтение/запись", "SQL")
+Rel(monolith, moviesDB, "Чтение/запись (легаси)", "SQL")
+
+' Внешние интеграции
+Rel(paymentsService, paymentProviders, "Обработка платежей", "REST/HTTPS")
+Rel(moviesService, recommendationSystem, "Получение рекомендаций", "REST/HTTPS")
+
+' Событийная архитектура
+Rel(usersService, kafka, "Публикует user_events", "Kafka")
+Rel(paymentsService, kafka, "Публикует payment_events", "Kafka")
+Rel(moviesService, kafka, "Публикует movie_events", "Kafka")
+Rel(eventsService, kafka, "Подписывается на все топики", "Kafka")
+@enduml

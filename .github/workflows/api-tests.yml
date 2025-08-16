@@ -37,7 +37,7 @@ jobs:
       - name: Start services with Docker Compose
         run: |
           echo "Starting Docker Compose services..."
-          docker compose up -d --verbose
+          docker compose up -d
           echo "Services started, waiting for them to be ready..."
           sleep 180
           echo "Checking service status..."

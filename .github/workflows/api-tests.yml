@@ -65,15 +65,18 @@ jobs:
       - name: Install Newman and dependencies
         working-directory: tests/postman
         run: |
+          echo "Installing dependencies..."
           npm install
-          npm install -g newman
+          echo "Dependencies installed successfully"
+          echo "Newman version:"
+          npx newman --version
       
       - name: Run API tests
         working-directory: tests/postman
         run: |
-          # Run tests directly with Newman
+          # Run tests using npx to use locally installed Newman
           echo "Running API tests..."
-          npm run test:docker || echo "Some tests failed, but continuing..."
+          npx newman run CinemaAbyss.postman_collection.json -e docker.environment.json --reporters cli || echo "Some tests failed, but continuing..."
         
       
       - name: Stop services

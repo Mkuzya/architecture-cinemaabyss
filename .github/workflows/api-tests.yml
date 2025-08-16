@@ -58,7 +58,7 @@ jobs:
         working-directory: tests/postman
         run: |
           # Run tests directly with Newman using docker environment
-          npm run test:docker
+          npm run test:ci
         
       
       - name: Stop services

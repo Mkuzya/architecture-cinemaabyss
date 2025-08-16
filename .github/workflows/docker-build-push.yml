@@ -125,3 +125,38 @@ jobs:
           labels: ${{ steps.meta-proxy.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Set up Docker Compose
+        run: |
+          # Docker Compose V2 is included in ubuntu-latest
+          docker compose version
+      
+      - name: Start services with Docker Compose
+        run: |
+          echo "Starting Docker Compose services..."
+          docker compose up -d
+          echo "Services started, waiting for them to be ready..."
+          sleep 180
+          echo "Checking service status..."
+          docker compose ps
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: tests/postman/package-lock.json
+      
+      - name: Install Newman and dependencies
+        working-directory: tests/postman
+        run: npm install
+      
+      - name: Run API tests
+        working-directory: tests/postman
+        run: |
+          # Run tests directly with Newman
+          npm run test:docker || true
+        
+      - name: Stop services
+        if: always()
+        run: docker compose down

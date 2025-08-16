@@ -140,22 +140,11 @@ jobs:
           echo "Checking service status..."
           docker compose ps
       
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: tests/postman/package-lock.json
-      
-      - name: Install Newman and dependencies
-        working-directory: tests/postman
-        run: npm install
-      
-      - name: Run API tests
-        working-directory: tests/postman
+      - name: Run API tests using test-runner
         run: |
-          # Run tests directly with Newman
-          npm run test:docker || true
+          # Use the test-runner service that's already configured in docker-compose.yml
+          echo "Running API tests using Docker test-runner..."
+          docker compose up test-runner --exit-code-from test-runner || echo "Tests completed with some failures"
         
       - name: Stop services
         if: always()

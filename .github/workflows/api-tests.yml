@@ -36,10 +36,12 @@ jobs:
       
       - name: Start services with Docker Compose
         run: |
-          docker compose up -d
-          # Wait for services to be ready
-          echo "Waiting for services to be ready..."
-          sleep 120
+          echo "Starting Docker Compose services..."
+          docker compose up -d --verbose
+          echo "Services started, waiting for them to be ready..."
+          sleep 180
+          echo "Checking service status..."
+          docker compose ps
       
       - name: Set up Node.js
         uses: actions/setup-node@v3

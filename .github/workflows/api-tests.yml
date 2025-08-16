@@ -31,11 +31,12 @@ jobs:
 
       - name: Set up Docker Compose
         run: |
-          docker compose --version
+          # Docker Compose V2 is included in ubuntu-latest
+          docker compose version
       
       - name: Start services with Docker Compose
         run: |
-          docker-compose up -d
+          docker compose up -d
           # Wait for services to be ready
           echo "Waiting for services to be ready..."
           sleep 120
@@ -63,4 +64,4 @@ jobs:
       
       - name: Stop services
         if: always()
-        run: docker-compose down
+        run: docker compose down

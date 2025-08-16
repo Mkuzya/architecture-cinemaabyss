@@ -2,6 +2,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Install Newman
+RUN npm install -g newman
+
 # Copy package files
 COPY package*.json ./
 
@@ -11,8 +14,8 @@ RUN npm install
 # Copy test files
 COPY . .
 
-# Expose port for reports
-EXPOSE 3000
+# Make script executable
+RUN chmod +x run-tests.sh
 
 # Default command
-CMD ["node", "run-tests.js", "--environment", "docker", "--timeout", "30000"]
+CMD ["npm", "run", "test:docker"]

@@ -57,11 +57,8 @@ jobs:
       - name: Run API tests
         working-directory: tests/postman
         run: |
-          # Build the Docker image
-          docker build -t cinemaabyss-api-tests .
-          
-          # Run the tests in Docker (continue even if some tests fail)
-          docker run --network=cinemaabyss-network -v "$(pwd)/reports:/app/reports" cinemaabyss-api-tests || true
+          # Run tests directly with Newman
+          npm run test:docker || true
         
       
       - name: Stop services

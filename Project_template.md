@@ -71,11 +71,25 @@ OK
 
 **Скриншот результатов Postman тестов:**
 ```
-Newman run completed!
-Total requests: 22
-Failed requests: 0
-Total assertions: 42
-Failed assertions: 0
+┌─────────────────────────┬───────────────────┬──────────────────┐
+│                         │          executed │           failed │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              iterations │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│                requests │                22 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│            test-scripts │                22 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│      prerequest-scripts │                 0 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              assertions │                42 │                0 │
+├─────────────────────────┴───────────────────┴──────────────────┤
+│ total run duration: 30.7s                                      │
+├────────────────────────────────────────────────────────────────┤
+│ total data received: 29.91kB (approx)                          │
+├────────────────────────────────────────────────────────────────┤
+│ average response time: 1375ms [min: 1ms, max: 10s, s.d.: 3.4s] │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 **Скриншот состояния топиков Kafka из UI http://localhost:8090:**
@@ -88,11 +102,25 @@ Failed assertions: 0
 
 Все тесты прошли успешно:
 ```
-Newman run completed!
-Total requests: 22
-Failed requests: 0
-Total assertions: 42
-Failed assertions: 0
+┌─────────────────────────┬───────────────────┬──────────────────┐
+│                         │          executed │           failed │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              iterations │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│                requests │                22 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│            test-scripts │                22 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│      prerequest-scripts │                 0 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              assertions │                42 │                0 │
+├─────────────────────────┴───────────────────┴──────────────────┤
+│ total run duration: 30.7s                                      │
+├────────────────────────────────────────────────────────────────┤
+│ total data received: 29.91kB (approx)                          │
+├────────────────────────────────────────────────────────────────┤
+│ average response time: 1375ms [min: 1ms, max: 10s, s.d.: 3.4s] │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 **Postman тестирование успешно:**
@@ -103,8 +131,8 @@ Failed assertions: 0
 
 Логи Events Service после тестирования:
 ```
-2025/08/15 17:06:05 Produced to movie-events: {"movie_id":12,"title":"Test Movie Event","action":"viewed","user_id":7,"timestamp":"2025-08-15T17:06:03Z"}
-2025/08/15 17:06:05 Consumed from movie-events: {"movie_id":8,"title":"Test Movie Event","action":"viewed","user_id":5,"timestamp":"2025-08-15T16:53:12Z"}
+2025/08/16 18:44:04 Produced to movie-events: {"movie_id":1,"title":"Test Movie Event","action":"viewed","user_id":1,"timestamp":"2025-08-16T18:00:00Z"}
+2025/08/16 18:44:04 Consumed from movie-events: {"movie_id":0,"title":"Test Movie","action":"","user_id":0,"timestamp":"2025-08-16T18:13:18Z"}
 2025/08/15 17:06:15 Produced to user-events: {"user_id":7,"username":"testuser","action":"logged_in","timestamp":"2025-08-15T17:06:14.225Z"}
 2025/08/15 17:06:15 Consumed from user-events: {"user_id":5,"username":"testuser","action":"logged_in","timestamp":"2025-08-15T16:53:22.425Z"}
 2025/08/15 17:06:25 Produced to payment-events: {"payment_id":7,"user_id":7,"amount":9.99,"status":"completed","timestamp":"2025/08/15T17:06:24.541Z","method_type":"credit_card"}

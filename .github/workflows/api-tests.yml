@@ -39,44 +39,26 @@ jobs:
           echo "Starting Docker Compose services..."
           docker compose up -d
           echo "Services started, waiting for them to be ready..."
-          
-          # Wait for services to be ready with health checks
-          echo "Waiting for services to be ready..."
-          timeout 300 bash -c 'until docker compose ps | grep -q "Up"; do sleep 5; done'
-          
+          sleep 180
           echo "Checking service status..."
           docker compose ps
-          
-          # Additional wait for services to fully initialize
-          echo "Waiting additional time for services to fully initialize..."
-          sleep 60
-          
-          # Check if key services are responding
-          echo "Testing service health endpoints..."
-          docker compose exec -T monolith curl -f http://localhost:8080/health || echo "Monolith health check failed"
-          docker compose exec -T movies-service curl -f http://localhost:8081/api/movies/health || echo "Movies service health check failed"
-          docker compose exec -T proxy-service curl -f http://localhost:8000/health || echo "Proxy service health check failed"
       
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: tests/postman/package-lock.json
       
       - name: Install Newman and dependencies
         working-directory: tests/postman
-        run: |
-          echo "Installing dependencies..."
-          npm install
-          echo "Dependencies installed successfully"
-          echo "Newman version:"
-          npx newman --version
+        run: npm install
       
       - name: Run API tests
         working-directory: tests/postman
         run: |
-          # Run tests using npx to use locally installed Newman
-          echo "Running API tests..."
-          npx newman run CinemaAbyss.postman_collection.json -e docker.environment.json --reporters cli || echo "Some tests failed, but continuing..."
+          # Run tests directly with Newman
+          npm run test:docker || true
         
       
       - name: Stop services

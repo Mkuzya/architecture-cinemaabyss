@@ -47,12 +47,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: tests/postman/package-lock.json
       
       - name: Install Newman and dependencies
         working-directory: tests/postman
-        run: npm install
+        run: |
+          npm install
+          npm install -g newman
       
       - name: Run API tests
         working-directory: tests/postman

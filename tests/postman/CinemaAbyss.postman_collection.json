@@ -1,9 +1,36 @@
 {
   "info": {
-    "name": "CinemaAbyss API Tests - Fixed",
-    "description": "Fixed API tests for CinemaAbyss microservices architecture",
+    "name": "CinemaAbyss API Tests",
+    "description": "API tests for CinemaAbyss microservices architecture",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "movieId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "paymentId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "subscriptionId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "msMovieId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
   "item": [
     {
       "name": "Monolith Service",
@@ -50,12 +77,13 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
+                  "",
                   "pm.test(\"Response is an array\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(Array.isArray(jsonData)).to.be.true;",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -64,6 +92,12 @@
           "name": "Create User",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/users",
               "host": ["{{baseUrl}}"],
@@ -71,12 +105,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"username\": \"testuser{{$randomInt}}\",\n    \"email\": \"testuser{{$randomInt}}@example.com\"\n}"
             }
           },
           "event": [
@@ -84,23 +113,17 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201, 400, or 500 (acceptable)\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    pm.expect(statusCode).to.be.oneOf([201, 400, 500]);",
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
                   "});",
-                  "pm.test(\"Response has id or is error\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    if (statusCode === 201) {",
-                  "        var jsonData = pm.response.json();",
-                  "        pm.expect(jsonData.id).to.exist;",
-                  "        pm.collectionVariables.set(\"userId\", jsonData.id);",
-                  "    } else {",
-                  "        // Accept any non-success response",
-                  "        pm.expect(statusCode).to.not.equal(201);",
-                  "    }",
+                  "",
+                  "pm.test(\"Response has id\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.exist;",
+                  "    pm.collectionVariables.set(\"userId\", jsonData.id);",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -110,13 +133,13 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/users?id=1",
+              "raw": "{{baseUrl}}/api/users?id={{userId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "users"],
               "query": [
                 {
                   "key": "id",
-                  "value": "1"
+                  "value": "{{userId}}"
                 }
               ]
             }
@@ -129,12 +152,13 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"ID matches or exists\", function () {",
+                  "",
+                  "pm.test(\"User ID exists\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.id).to.exist;",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -157,12 +181,13 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
+                  "",
                   "pm.test(\"Response is an array\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(Array.isArray(jsonData)).to.be.true;",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -171,6 +196,12 @@
           "name": "Create Movie",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/movies",
               "host": ["{{baseUrl}}"],
@@ -178,12 +209,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Test Movie\",\n  \"description\": \"A test movie\",\n  \"release_year\": 2024,\n  \"genre\": \"Action\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"title\": \"Test Movie {{$randomInt}}\",\n    \"description\": \"A test movie created by automated tests\",\n    \"genres\": [\"Action\", \"Drama\"],\n    \"rating\": 4.5\n}"
             }
           },
           "event": [
@@ -191,22 +217,17 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 or 400 (acceptable)\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    pm.expect(statusCode).to.be.oneOf([201, 400]);",
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
                   "});",
-                  "pm.test(\"Response has id or is error\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    if (statusCode === 201) {",
-                  "        var jsonData = pm.response.json();",
-                  "        pm.expect(jsonData.id).to.exist;",
-                  "        pm.collectionVariables.set(\"movieId\", jsonData.id);",
-                  "    } else {",
-                  "        pm.expect(pm.response.text()).to.contain(\"error\");",
-                  "    }",
+                  "",
+                  "pm.test(\"Response has id\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.exist;",
+                  "    pm.collectionVariables.set(\"movieId\", jsonData.id);",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -216,13 +237,13 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/movies?id=1",
+              "raw": "{{baseUrl}}/api/movies?id={{movieId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "movies"],
               "query": [
                 {
                   "key": "id",
-                  "value": "1"
+                  "value": "{{movieId}}"
                 }
               ]
             }
@@ -235,12 +256,13 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"ID matches or exists\", function () {",
+                  "",
+                  "pm.test(\"Movie ID exists\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.id).to.exist;",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -249,6 +271,12 @@
           "name": "Create Payment",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/payments",
               "host": ["{{baseUrl}}"],
@@ -256,12 +284,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"user_id\": 1,\n  \"amount\": 9.99,\n  \"payment_method\": \"credit_card\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"user_id\": {{userId}},\n    \"amount\": 9.99\n}"
             }
           },
           "event": [
@@ -269,22 +292,17 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 or 400 (acceptable)\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    pm.expect(statusCode).to.be.oneOf([201, 400]);",
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
                   "});",
-                  "pm.test(\"Response has id or is error\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    if (statusCode === 201) {",
-                  "        var jsonData = pm.response.json();",
-                  "        pm.expect(jsonData.id).to.exist;",
-                  "        pm.collectionVariables.set(\"paymentId\", jsonData.id);",
-                  "    } else {",
-                  "        pm.expect(pm.response.text()).to.contain(\"error\");",
-                  "    }",
+                  "",
+                  "pm.test(\"Response has id\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.exist;",
+                  "    pm.collectionVariables.set(\"paymentId\", jsonData.id);",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -294,13 +312,13 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/payments?id=1",
+              "raw": "{{baseUrl}}/api/payments?id={{paymentId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "payments"],
               "query": [
                 {
                   "key": "id",
-                  "value": "1"
+                  "value": "{{paymentId}}"
                 }
               ]
             }
@@ -313,12 +331,13 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"ID matches or exists\", function () {",
+                  "",
+                  "pm.test(\"Payment ID exists\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.id).to.exist;",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -327,6 +346,12 @@
           "name": "Create Subscription",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/subscriptions",
               "host": ["{{baseUrl}}"],
@@ -334,12 +359,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"user_id\": 1,\n  \"plan_type\": \"premium\",\n  \"duration_months\": 12\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"user_id\": {{userId}},\n    \"plan_type\": \"premium\",\n    \"start_date\": \"{{$isoTimestamp}}\",\n    \"end_date\": \"{{$isoTimestamp}}\"\n}"
             }
           },
           "event": [
@@ -347,22 +367,17 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 or 400 (acceptable)\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    pm.expect(statusCode).to.be.oneOf([201, 400]);",
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
                   "});",
-                  "pm.test(\"Response has id or is error\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    if (statusCode === 201) {",
-                  "        var jsonData = pm.response.json();",
-                  "        pm.expect(jsonData.id).to.exist;",
-                  "        pm.collectionVariables.set(\"subscriptionId\", jsonData.id);",
-                  "    } else {",
-                  "        pm.expect(pm.response.text()).to.contain(\"error\");",
-                  "    }",
+                  "",
+                  "pm.test(\"Response has id\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.exist;",
+                  "    pm.collectionVariables.set(\"subscriptionId\", jsonData.id);",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -372,13 +387,13 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{baseUrl}}/api/subscriptions?id=1",
+              "raw": "{{baseUrl}}/api/subscriptions?id={{subscriptionId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "subscriptions"],
               "query": [
                 {
                   "key": "id",
-                  "value": "1"
+                  "value": "{{subscriptionId}}"
                 }
               ]
             }
@@ -391,12 +406,13 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"ID matches or exists\", function () {",
+                  "",
+                  "pm.test(\"Subscription ID exists\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.id).to.exist;",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -424,12 +440,13 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
+                  "",
                   "pm.test(\"Status is true\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.status).to.equal(true);",
+                  "    pm.expect(jsonData.status).to.be.true;",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -452,12 +469,13 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
+                  "",
                   "pm.test(\"Response is an array\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(Array.isArray(jsonData)).to.be.true;",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -466,6 +484,12 @@
           "name": "Create Movie",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{moviesServiceUrl}}/api/movies",
               "host": ["{{moviesServiceUrl}}"],
@@ -473,12 +497,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Test Movie MS\",\n  \"description\": \"A test movie from microservice\",\n  \"release_year\": 2024,\n  \"genre\": \"Action\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"title\": \"Microservice Test Movie {{$randomInt}}\",\n    \"description\": \"A test movie created by automated tests for the microservice\",\n    \"genres\": [\"Sci-Fi\", \"Thriller\"],\n    \"rating\": 4.8\n}"
             }
           },
           "event": [
@@ -486,22 +505,17 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 or 400 (acceptable)\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    pm.expect(statusCode).to.be.oneOf([201, 400]);",
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
                   "});",
-                  "pm.test(\"Response has id or is error\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    if (statusCode === 201) {",
-                  "        var jsonData = pm.response.json();",
-                  "        pm.expect(jsonData.id).to.exist;",
-                  "        pm.collectionVariables.set(\"msMovieId\", jsonData.id);",
-                  "    } else {",
-                  "        pm.expect(pm.response.text()).to.contain(\"error\");",
-                  "    }",
+                  "",
+                  "pm.test(\"Response has id\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.id).to.exist;",
+                  "    pm.collectionVariables.set(\"msMovieId\", jsonData.id);",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -511,13 +525,13 @@
           "request": {
             "method": "GET",
             "url": {
-              "raw": "{{moviesServiceUrl}}/api/movies?id=1",
+              "raw": "{{moviesServiceUrl}}/api/movies?id={{msMovieId}}",
               "host": ["{{moviesServiceUrl}}"],
               "path": ["api", "movies"],
               "query": [
                 {
                   "key": "id",
-                  "value": "1"
+                  "value": "{{msMovieId}}"
                 }
               ]
             }
@@ -530,12 +544,13 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
-                  "pm.test(\"ID matches or exists\", function () {",
+                  "",
+                  "pm.test(\"Movie ID exists\", function () {",
                   "    var jsonData = pm.response.json();",
                   "    pm.expect(jsonData.id).to.exist;",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -563,12 +578,13 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
+                  "",
                   "pm.test(\"Status is true\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData.status).to.equal(true);",
+                  "    pm.expect(jsonData.status).to.be.true;",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -577,6 +593,12 @@
           "name": "Create Movie Event",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{eventsServiceUrl}}/api/events/movie",
               "host": ["{{eventsServiceUrl}}"],
@@ -584,12 +606,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"movie_id\": 1,\n  \"title\": \"Test Movie Event\",\n  \"action\": \"viewed\",\n  \"user_id\": 1,\n  \"timestamp\": \"2025-08-16T18:00:00Z\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"movie_id\": {{movieId}},\n    \"title\": \"Test Movie Event\",\n    \"action\": \"viewed\",\n    \"user_id\": {{userId}}\n}"
             }
           },
           "event": [
@@ -597,21 +614,16 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 or 400 (Events service expected to fail)\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    pm.expect(statusCode).to.be.oneOf([201, 400]);",
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
                   "});",
-                  "pm.test(\"Response has status success or is error\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    if (statusCode === 201) {",
-                  "        var jsonData = pm.response.json();",
-                  "        pm.expect(jsonData.status).to.equal(\"success\");",
-                  "    } else {",
-                  "        pm.expect(pm.response.text()).to.contain(\"error\");",
-                  "    }",
+                  "",
+                  "pm.test(\"Response has status success\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.equal(\"success\");",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -620,6 +632,12 @@
           "name": "Create User Event",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{eventsServiceUrl}}/api/events/user",
               "host": ["{{eventsServiceUrl}}"],
@@ -627,12 +645,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"user_id\": 1,\n  \"username\": \"testuser\",\n  \"action\": \"logged_in\",\n  \"timestamp\": \"2025-08-16T18:00:00Z\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"user_id\": {{userId}},\n    \"username\": \"testuser\",\n    \"action\": \"logged_in\",\n    \"timestamp\": \"{{$isoTimestamp}}\"\n}"
             }
           },
           "event": [
@@ -640,21 +653,16 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 or 400 (Events service expected to fail)\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    pm.expect(statusCode).to.be.oneOf([201, 400]);",
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
                   "});",
-                  "pm.test(\"Response has status success or is error\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    if (statusCode === 201) {",
-                  "        var jsonData = pm.response.json();",
-                  "        pm.expect(jsonData.status).to.equal(\"success\");",
-                  "    } else {",
-                  "        pm.expect(pm.response.text()).to.contain(\"error\");",
-                  "    }",
+                  "",
+                  "pm.test(\"Response has status success\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.equal(\"success\");",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -663,6 +671,12 @@
           "name": "Create Payment Event",
           "request": {
             "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{eventsServiceUrl}}/api/events/payment",
               "host": ["{{eventsServiceUrl}}"],
@@ -670,12 +684,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"payment_id\": 1,\n  \"user_id\": 1,\n  \"amount\": 9.99,\n  \"status\": \"completed\",\n  \"timestamp\": \"2025-08-16T18:00:00Z\",\n  \"method_type\": \"credit_card\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"payment_id\": {{paymentId}},\n    \"user_id\": {{userId}},\n    \"amount\": 9.99,\n    \"status\": \"completed\",\n    \"timestamp\": \"{{$isoTimestamp}}\",\n    \"method_type\": \"credit_card\"\n}"
             }
           },
           "event": [
@@ -683,21 +692,16 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 201 or 400 (Events service expected to fail)\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    pm.expect(statusCode).to.be.oneOf([201, 400]);",
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
                   "});",
-                  "pm.test(\"Response has status success or is error\", function () {",
-                  "    var statusCode = pm.response.code;",
-                  "    if (statusCode === 201) {",
-                  "        var jsonData = pm.response.json();",
-                  "        pm.expect(jsonData.status).to.equal(\"success\");",
-                  "    } else {",
-                  "        pm.expect(pm.response.text()).to.contain(\"error\");",
-                  "    }",
+                  "",
+                  "pm.test(\"Response has status success\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.equal(\"success\");",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -726,7 +730,7 @@
                   "    pm.response.to.have.status(200);",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -749,12 +753,13 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
+                  "",
                   "pm.test(\"Response is an array\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(Array.isArray(jsonData)).to.be.true;",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
@@ -777,17 +782,56 @@
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
                   "});",
+                  "",
                   "pm.test(\"Response is an array\", function () {",
                   "    var jsonData = pm.response.json();",
-                  "    pm.expect(jsonData).to.be.an('array');",
+                  "    pm.expect(Array.isArray(jsonData)).to.be.true;",
                   "});"
                 ],
-                "type": "text-javascript"
+                "type": "text/javascript"
               }
             }
           ]
         }
       ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "moviesServiceUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "eventsServiceUrl",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "proxyServiceUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "movieId",
+      "value": ""
+    },
+    {
+      "key": "msMovieId",
+      "value": ""
+    },
+    {
+      "key": "paymentId",
+      "value": ""
+    },
+    {
+      "key": "subscriptionId",
+      "value": ""
     }
   ]
 }

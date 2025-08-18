@@ -68,6 +68,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Increase timeout for Docker tests to handle Events Service Kafka operations
+if [ "$USE_DOCKER" = true ] && [ "$TIMEOUT" = "10000" ]; then
+  TIMEOUT=60000
+fi
+
 # Ensure we're in the right directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"

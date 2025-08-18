@@ -4,25 +4,25 @@
   "values": [
     {
       "key": "baseUrl",
-      "value": "http://127.0.0.1:8083",
+      "value": "http://localhost:8080",
       "type": "default",
       "enabled": true
     },
     {
       "key": "moviesServiceUrl",
-      "value": "http://127.0.0.1:8081",
+      "value": "http://localhost:8081",
       "type": "default",
       "enabled": true
     },
     {
       "key": "eventsServiceUrl",
-      "value": "http://127.0.0.1:8082",
+      "value": "http://localhost:8082",
       "type": "default",
       "enabled": true
     },
     {
       "key": "proxyServiceUrl",
-      "value": "http://127.0.0.1:8000",
+      "value": "http://localhost:8000",
       "type": "default",
       "enabled": true
     },

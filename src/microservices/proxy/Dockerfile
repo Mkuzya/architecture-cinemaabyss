@@ -11,7 +11,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o proxy-service .
 
 FROM alpine:latest
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates wget
 WORKDIR /root/
 COPY --from=builder /app/proxy-service .
 EXPOSE 8000

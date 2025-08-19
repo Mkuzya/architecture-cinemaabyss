@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: events-service
-        image: architecture-cinemaabyss-events-service:latest
-        imagePullPolicy: Never
+        image: ghcr.io/mkuzya/architecture-cinemaabyss/events-service:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8082
         env:

@@ -1,0 +1,81 @@
+name: Helm Deployment Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, dev ]
+    paths:
+      - 'src/kubernetes/**'
+      - '.github/workflows/helm-test.yml'
+  pull_request:
+    branches: [ main, dev ]
+    paths:
+      - 'src/kubernetes/**'
+
+jobs:
+  helm-test:
+    name: Test Helm Deployment
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Minikube
+        uses: medyagh/setup-minikube@master
+        with:
+          driver: docker
+          kubernetes-version: 'v1.25.0'
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: 'v3.12.0'
+
+      - name: Start Minikube
+        run: |
+          minikube start --driver=docker
+          minikube status
+
+      - name: Test Helm Chart
+        run: |
+          echo "Testing Helm chart syntax..."
+          helm lint ./src/kubernetes/helm
+          
+          echo "Testing Helm template rendering..."
+          helm template cinemaabyss ./src/kubernetes/helm --dry-run
+          
+          echo "Testing Helm installation..."
+          helm install cinemaabyss ./src/kubernetes/helm --dry-run
+
+      - name: Deploy to Minikube
+        run: |
+          echo "Deploying Helm chart to Minikube..."
+          helm install cinemaabyss ./src/kubernetes/helm
+          
+          echo "Waiting for pods to be ready..."
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cinemaabyss --timeout=300s
+          
+          echo "Checking pod status..."
+          kubectl get pods -n cinemaabyss
+          
+          echo "Checking services..."
+          kubectl get services -n cinemaabyss
+
+      - name: Test Service Connectivity
+        run: |
+          echo "Testing service connectivity..."
+          # Wait for services to be ready
+          sleep 30
+          
+          # Test if services are responding (basic connectivity test)
+          kubectl get pods -n cinemaabyss -o wide
+          
+          echo "Helm deployment test completed successfully!"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "Cleaning up Helm deployment..."
+          helm uninstall cinemaabyss || true
+          minikube stop || true

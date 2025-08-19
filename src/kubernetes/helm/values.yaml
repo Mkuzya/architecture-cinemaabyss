@@ -5,7 +5,7 @@ global:
 
 # Image pull secrets
 imagePullSecrets:
-  dockerconfigjson: eyJhdXRocyI6eyJnaGNyLmlvIjp7ImF1dGgiOiJnaXRodWJfYWN0aW9uczpnYHBfT2RRNmZ0cGJMQ3RGbW41Q3dxUjJZMVBOYmFlT3RSMjNMUE1uIn19fQ==
+  dockerconfigjson: eyJhdXRocyI6eyJnaGNyLmlvIjp7ImF1dGgiOiJnaXRodWJfYWN0aW9uczpnYHBfT2RRNmZ0cGJMQ3RGbW41Q3dxUjJZMVBOYmFlT3RSMjNMUE1uIn19fQo=
 # Database configuration
 database:
   host: postgres
@@ -33,7 +33,7 @@ database:
 monolith:
   enabled: true
   image:
-    repository: ghcr.io/mkuzya/architecture-cinemaabyss/monolith
+    repository: ghcr.io/db-exp/cinemaabysstest/monolith
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -53,7 +53,7 @@ monolith:
 proxyService:
   enabled: true
   image:
-    repository: ghcr.io/mkuzya/architecture-cinemaabyss/proxy-service
+    repository: ghcr.io/db-exp/cinemaabysstest/proxy-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -73,7 +73,7 @@ proxyService:
 moviesService:
   enabled: true
   image:
-    repository: ghcr.io/mkuzya/architecture-cinemaabyss/movies-service
+    repository: ghcr.io/db-exp/cinemaabysstest/movies-service
     tag: latest
     pullPolicy: Always
   replicas: 1
@@ -93,9 +93,9 @@ moviesService:
 eventsService:
   enabled: true
   image:
-    repository: nginx
-    tag: alpine
-    pullPolicy: IfNotPresent
+    repository: ghcr.io/db-exp/cinemaabysstest/events-service
+    tag: latest
+    pullPolicy: Always
   replicas: 1
   resources:
     limits:

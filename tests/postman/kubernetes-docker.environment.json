@@ -1,10 +1,10 @@
 {
-  "id": "docker-env",
-  "name": "Docker Environment",
+  "id": "kubernetes-docker-env",
+  "name": "Kubernetes Docker Environment",
   "values": [
     {
       "key": "baseUrl",
-      "value": "http://monolith:8080",
+      "value": "http://proxy-service:8000",
       "type": "default",
       "enabled": true
     },
@@ -23,24 +23,6 @@
     {
       "key": "proxyServiceUrl",
       "value": "http://proxy-service:8000",
-      "type": "default",
-      "enabled": true
-    },
-    {
-      "key": "movieId",
-      "value": "1",
-      "type": "default",
-      "enabled": true
-    },
-    {
-      "key": "userId",
-      "value": "1",
-      "type": "default",
-      "enabled": true
-    },
-    {
-      "key": "paymentId",
-      "value": "1",
       "type": "default",
       "enabled": true
     }

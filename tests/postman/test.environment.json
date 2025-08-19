@@ -1,46 +1,52 @@
 {
-  "id": "local-env",
-  "name": "Local Environment",
+  "id": "test-env",
+  "name": "Test Environment",
   "values": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:8080",
+      "value": "http://127.0.0.1:8080",
       "type": "default",
       "enabled": true
     },
     {
       "key": "moviesServiceUrl",
-      "value": "http://localhost:8081",
+      "value": "http://127.0.0.1:8081",
       "type": "default",
       "enabled": true
     },
     {
       "key": "eventsServiceUrl",
-      "value": "http://localhost:8082",
+      "value": "http://127.0.0.1:8082",
       "type": "default",
       "enabled": true
     },
     {
       "key": "proxyServiceUrl",
-      "value": "http://localhost:8000",
-      "type": "default",
-      "enabled": true
-    },
-    {
-      "key": "movieId",
-      "value": "1",
+      "value": "http://127.0.0.1:8000",
       "type": "default",
       "enabled": true
     },
     {
       "key": "userId",
-      "value": "1",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "movieId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "msMovieId",
+      "value": "",
       "type": "default",
       "enabled": true
     },
     {
       "key": "paymentId",
-      "value": "1",
+      "value": "",
       "type": "default",
       "enabled": true
     }

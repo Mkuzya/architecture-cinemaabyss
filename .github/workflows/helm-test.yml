@@ -41,10 +41,10 @@ jobs:
         run: |
           echo "Waiting for Docker images to be available..."
           # Check if required images are available
-          docker pull ghcr.io/db-exp/cinemaabysstest/monolith:latest || echo "Monolith image not ready"
-          docker pull ghcr.io/db-exp/cinemaabysstest/movies-service:latest || echo "Movies service image not ready"
-          docker pull ghcr.io/db-exp/cinemaabysstest/events-service:latest || echo "Events service image not ready"
-          docker pull ghcr.io/db-exp/cinemaabysstest/proxy-service:latest || echo "Proxy service image not ready"
+          docker pull ghcr.io/${{ github.repository }}/monolith:latest || echo "Monolith image not ready"
+          docker pull ghcr.io/${{ github.repository }}/movies-service:latest || echo "Movies service image not ready"
+          docker pull ghcr.io/${{ github.repository }}/events-service:latest || echo "Events service image not ready"
+          docker pull ghcr.io/${{ github.repository }}/proxy-service:latest || echo "Proxy service image not ready"
 
       - name: Test Helm Chart
         run: |

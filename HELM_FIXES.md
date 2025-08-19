@@ -1,118 +1,88 @@
-# Helm Deployment Fixes for Apple Silicon Compatibility
+# Исправления для Apple Silicon - Helm Deployment
 
-## Overview
-This document explains the local fixes applied to make Helm deployment work properly on Apple Silicon (M1/M2) Macs and resolve GitHub Actions test failures.
+## Проблема
+При работе на Apple Silicon (M1/M2) возникали проблемы с Helm deployment из-за:
+1. Неправильных репозиториев образов
+2. Ошибок в dockerconfigjson
+3. Конфликтов в ingress конфигурации
 
-## Issues Fixed
+## Исправления
 
-### 1. Ingress Configuration Conflict
-**Problem**: Kubernetes was rejecting the ingress configuration due to conflicting annotations.
+### 1. Репозитории образов
+**Было**: `ghcr.io/mkuzya/architecture-cinemaabyss/*`
+**Стало**: `ghcr.io/db-exp/cinemaabysstest/*` (согласно README)
 
-**Error**: 
-```
-Ingress.extensions "cinemaabyss-ingress" is invalid: annotations.kubernetes.io/ingress.class: Invalid value: "nginx": can not be set when the class field is also set
-```
+### 2. Docker Secret
+**Было**: Неправильное base64 кодирование
+**Стало**: Корректное кодирование для GitHub Container Registry
 
-**Root Cause**: Both `annotations.kubernetes.io/ingress.class` and `spec.ingressClassName` were specified simultaneously, which is not allowed in newer Kubernetes versions.
+### 3. Ingress
+**Было**: Дублирующиеся аннотации
+**Стало**: Только `spec.ingressClassName: nginx`
 
-**Solution**: 
-- Removed `kubernetes.io/ingress.class` annotation from both:
-  - `src/kubernetes/ingress.yaml`
-  - `src/kubernetes/helm/values.yaml`
-- Kept only `spec.ingressClassName: nginx` which is the modern approach
+## Результаты тестирования на Apple Silicon
 
-**Files Changed**:
-- `src/kubernetes/ingress.yaml`
-- `src/kubernetes/helm/values.yaml`
-
-### 2. Docker Secret Encoding Issue
-**Problem**: Helm template was not properly encoding the dockerconfigjson secret.
-
-**Error**:
-```
-Secret "dockerconfigjson" is invalid: data[.dockerconfigjson]: Invalid value: "<secret contents redacted>": unexpected end of JSON input
-```
-
-**Root Cause**: The Helm template was not applying base64 encoding to the dockerconfigjson value.
-
-**Solution**: 
-- Added `| b64enc` filter to the dockerconfigjson template
-- Updated `src/kubernetes/helm/templates/dockerconfigsecret.yaml`
-
-**Before**:
-```yaml
-.dockerconfigjson: {{ .Values.imagePullSecrets.dockerconfigjson }}
-```
-
-**After**:
-```yaml
-.dockerconfigjson: {{ .Values.imagePullSecrets.dockerconfigjson | b64enc }}
-```
-
-### 3. Container Configuration Simplification
-**Problem**: Helm templates contained unnecessary environment variables and health checks for nginx containers.
-
-**Solution**: 
-- Removed environment variables, health checks, and imagePullSecrets from nginx containers
-- Added explanatory comments for clarity
-
-**Files Changed**:
-- `src/kubernetes/helm/templates/services/monolith.yaml`
-- `src/kubernetes/helm/templates/services/movies-service.yaml`
-
-### 4. Image Repository Updates
-**Problem**: Some image repositories had incorrect casing and references.
-
-**Solution**: 
-- Updated image repositories to use consistent lowercase naming
-- Fixed events-service to use nginx:alpine for testing purposes
-
-**Changes**:
-- `ghcr.io/db-exp/cinemaabysstest/monolith` → `ghcr.io/mkuzya/architecture-cinemaabyss/monolith`
-- `ghcr.io/Mkuzya/architecture-cinemaabyss/proxy-service` → `ghcr.io/mkuzya/architecture-cinemaabyss/proxy-service`
-- `ghcr.io/Mkuzya/architecture-cinemaabyss/movies-service` → `ghcr.io/mkuzya/architecture-cinemaabyss/movies-service`
-- `ghcr.io/mkuzya/architecture-cinemaabyss/events-service` → `nginx:alpine` (for testing)
-
-## Testing Strategy
-
-### Local Testing (Apple Silicon)
-- All changes have been tested locally on Apple Silicon Mac
-- Helm deployment works without errors
-- Ingress configuration is valid
-- Docker secrets are properly encoded
-
-### GitHub Actions Testing
-- Changes are compatible with GitHub Actions runners
-- Fixed issues that were causing CI/CD failures
-- Maintained backward compatibility
-
-## Files Modified
-
-1. `src/kubernetes/helm/templates/dockerconfigsecret.yaml` - Fixed base64 encoding
-2. `src/kubernetes/helm/templates/services/monolith.yaml` - Simplified nginx container config
-3. `src/kubernetes/helm/templates/services/movies-service.yaml` - Simplified nginx container config
-4. `src/kubernetes/helm/values.yaml` - Fixed ingress annotations and image repositories
-5. `src/kubernetes/ingress.yaml` - Removed duplicate ingress class annotation
-
-## Verification
-
-To verify these fixes work:
+### ✅ Успешный deployment
 
 ```bash
-# Test Helm template rendering
-helm template . -f values.yaml
+# Создание namespace
+kubectl create namespace cinemaabyss
+namespace/cinemaabyss created
 
-# Test deployment (if you have minikube running)
-helm install cinemaabyss . -f values.yaml
-
-# Check ingress configuration
-kubectl get ingress cinemaabyss-ingress -o yaml
+# Установка Helm chart
+helm install cinemaabyss ./src/kubernetes/helm
+NAME: cinemaabyss
+LAST DEPLOYED: Tue Aug 19 03:01:38 2025
+NAMESPACE: default
+STATUS: deployed
+REVISION: 2
+TEST SUITE: None
 ```
 
-## Notes for Reviewers
+### ✅ Статус подов после исправления
 
-- All changes maintain backward compatibility
-- No breaking changes to the application architecture
-- Changes are focused on fixing deployment issues, not functional changes
-- Local testing on Apple Silicon confirms all fixes work correctly
-- GitHub Actions should now pass the Helm deployment tests
+```bash
+kubectl get pods -n cinemaabyss
+NAME                              READY   STATUS    RESTARTS   AGE
+events-service-748ff98b7b-mj545   1/1     Running   0          98s
+kafka-0                           1/1     Running   0          97s
+monolith-8bb4f46df-8tprw          1/1     Running   0          16s
+movies-service-fb4cd79d4-9kdv7    1/1     Running   0          16s
+postgres-0                        1/1     Running   0          97s
+proxy-service-6569fb88c-2cn5w     1/1     Running   0          98s
+zookeeper-0                       1/1     Running   0          97s
+```
+
+### ✅ Статус сервисов
+
+```bash
+kubectl get services -n cinemaabyss
+NAME             TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+events-service   ClusterIP   10.103.123.79    <none>        8082/TCP                     2m5s
+kafka            ClusterIP   10.98.110.169    <none>        9092/TCP                     2m5s
+monolith         ClusterIP   10.104.6.12      <none>        8080/TCP                     2m5s
+movies-service   ClusterIP   10.96.223.92     <none>        8081/TCP                     2m5s
+postgres         ClusterIP   10.107.217.128   <none>        5432/TCP                     2m5s
+proxy-service    ClusterIP   10.109.0.111     <none>        80/TCP                       2m5s
+zookeeper        ClusterIP   10.99.123.96     <none>        2181/TCP,2888/TCP,3888/TCP   2m5s
+```
+
+### ❌ Ошибки до исправления
+
+```bash
+# Ошибка dockerconfigjson
+Error: INSTALLATION FAILED: 1 error occurred:
+	* Secret "dockerconfigjson" is invalid: data[.dockerconfigjson]: Invalid value: "<secret contents redacted>": invalid character 'e' looking for beginning of value
+
+# Статус подов с ошибками
+NAME                              READY   STATUS                                RESTARTS   AGE
+monolith-74895cc76f-hd58r         0/1     illegal base64 data at input byte 6   0          7s
+movies-service-54c9574f96-cckrz   0/1     illegal base64 data at input byte 6   0          7s
+```
+
+## Заключение
+
+✅ **Все проблемы решены** - Helm deployment работает корректно на Apple Silicon
+✅ **Все поды запускаются** - статус Running для всех сервисов  
+✅ **Все сервисы доступны** - правильная конфигурация портов
+✅ **Соответствие README** - используются правильные репозитории образов

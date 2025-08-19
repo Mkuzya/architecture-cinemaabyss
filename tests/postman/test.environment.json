@@ -4,7 +4,7 @@
   "values": [
     {
       "key": "baseUrl",
-      "value": "http://127.0.0.1:8083",
+      "value": "http://127.0.0.1:8080",
       "type": "default",
       "enabled": true
     },

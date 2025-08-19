@@ -34,7 +34,7 @@ jobs:
 
       - name: Start Minikube
         run: |
-          minikube start --driver=docker --memory=4096 --cpus=2
+          minikube start --driver=docker --memory=8192 --cpus=4
           minikube status
           
           echo "Checking Minikube resources..."
@@ -71,14 +71,14 @@ jobs:
           
           echo "Waiting for pods to be created..."
           # Wait for pods to be created first
-          sleep 30
+          sleep 60
           
           echo "Checking initial pod status..."
           kubectl get pods -n cinemaabyss
           
           echo "Waiting for pods to be ready..."
           # Wait for pods with better error handling
-          kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cinemaabyss -n cinemaabyss --timeout=300s || echo "Some pods may still be starting"
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cinemaabyss -n cinemaabyss --timeout=600s || echo "Some pods may still be starting"
           
           echo "Checking final pod status..."
           kubectl get pods -n cinemaabyss
@@ -91,7 +91,14 @@ jobs:
         run: |
           echo "Testing service connectivity..."
           # Wait for services to be ready
-          sleep 60
+          sleep 120
+          
+          # Wait for specific pods to be ready
+          echo "Waiting for specific pods to be ready..."
+          kubectl wait --for=condition=ready pod -l app=monolith -n cinemaabyss --timeout=300s || echo "Monolith may still be starting"
+          kubectl wait --for=condition=ready pod -l app=proxy-service -n cinemaabyss --timeout=300s || echo "Proxy service may still be starting"
+          kubectl wait --for=condition=ready pod -l app=movies-service -n cinemaabyss --timeout=300s || echo "Movies service may still be starting"
+          kubectl wait --for=condition=ready pod -l app=events-service -n cinemaabyss --timeout=300s || echo "Events service may still be starting"
           
           # Check if all pods are running
           echo "Checking pod status after waiting..."

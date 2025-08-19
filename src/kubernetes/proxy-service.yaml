@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: proxy-service
-        image: architecture-cinemaabyss-proxy-service:latest
-        imagePullPolicy: Never
+        image: ghcr.io/mkuzya/architecture-cinemaabyss/proxy-service:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         env:

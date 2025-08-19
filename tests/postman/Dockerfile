@@ -18,4 +18,4 @@ COPY . .
 RUN chmod +x run-tests.sh
 
 # Default command
-CMD ["npm", "run", "test:docker"]
+CMD ["node", "run-tests.js"]

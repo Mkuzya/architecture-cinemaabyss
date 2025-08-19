@@ -122,7 +122,7 @@ if [ "$USE_DOCKER" = true ]; then
   # Run the tests in Docker
   docker run --network=cinemaabyss-network \
     -v "$(pwd)/reports:/app/reports" \
-    cinemaabyss-api-tests $CMD_ARGS
+    cinemaabyss-api-tests node run-tests.js $CMD_ARGS
 else
   echo "Running tests locally..."
   

@@ -32,9 +32,28 @@ spec:
         # No environment variables for nginx container
         resources:
           {{- toYaml .Values.monolith.resources | nindent 10 }}
-        # No health checks for nginx container
+        env:
+        - name: PORT
+          value: "{{ .Values.monolith.service.targetPort }}"
+        - name: DB_CONNECTION_STRING
+          value: "postgres://{{ .Values.database.user }}:{{ .Values.database.password }}@{{ .Values.database.host }}:{{ .Values.database.port }}/{{ .Values.database.name }}?sslmode=disable"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.monolith.service.targetPort }}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: {{ .Values.monolith.service.targetPort }}
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
       restartPolicy: Always
-      # No imagePullSecrets for nginx container
 ---
 apiVersion: v1
 kind: Service

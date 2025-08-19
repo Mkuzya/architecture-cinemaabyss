@@ -51,7 +51,7 @@ jobs:
       - name: Deploy to Minikube
         run: |
           echo "Deploying Helm chart to Minikube..."
-          helm install cinemaabyss ./src/kubernetes/helm
+          helm install cinemaabyss ./src/kubernetes/helm --create-namespace
           
           echo "Waiting for pods to be ready..."
           kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cinemaabyss --timeout=300s
@@ -61,7 +61,7 @@ jobs:
           
           echo "Checking services..."
           kubectl get services -n cinemaabyss
-
+          
       - name: Test Service Connectivity
         run: |
           echo "Testing service connectivity..."

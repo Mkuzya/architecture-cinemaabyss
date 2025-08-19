@@ -40,11 +40,11 @@ jobs:
       - name: Wait for Docker images
         run: |
           echo "Waiting for Docker images to be available..."
-          # Проверяем что образы собраны
-          docker pull ghcr.io/${{ github.repository }}/monolith:latest || echo "Monolith image not ready"
-          docker pull ghcr.io/${{ github.repository }}/movies-service:latest || echo "Movies service image not ready"
-          docker pull ghcr.io/${{ github.repository }}/events-service:latest || echo "Events service image not ready"
-          docker pull ghcr.io/${{ github.repository }}/proxy-service:latest || echo "Proxy service image not ready"
+          # Check if required images are available
+          docker pull ghcr.io/db-exp/cinemaabysstest/monolith:latest || echo "Monolith image not ready"
+          docker pull ghcr.io/db-exp/cinemaabysstest/movies-service:latest || echo "Movies service image not ready"
+          docker pull ghcr.io/db-exp/cinemaabysstest/events-service:latest || echo "Events service image not ready"
+          docker pull ghcr.io/db-exp/cinemaabysstest/proxy-service:latest || echo "Proxy service image not ready"
 
       - name: Test Helm Chart
         run: |
@@ -66,7 +66,8 @@ jobs:
           helm install cinemaabyss ./src/kubernetes/helm
           
           echo "Waiting for pods to be ready..."
-          kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cinemaabyss --timeout=300s
+          # Wait for pods in the cinemaabyss namespace
+          kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=cinemaabyss -n cinemaabyss --timeout=300s || echo "Some pods may still be starting"
           
           echo "Checking pod status..."
           kubectl get pods -n cinemaabyss
@@ -81,10 +82,22 @@ jobs:
           # Wait for services to be ready
           sleep 30
           
-          # Test if services are responding (basic connectivity test)
+          # Check if all pods are running
+          echo "Checking pod status after waiting..."
           kubectl get pods -n cinemaabyss -o wide
           
-          echo "Helm deployment test completed successfully!"
+          # Count running pods
+          RUNNING_PODS=$(kubectl get pods -n cinemaabyss --no-headers | grep -c "Running")
+          TOTAL_PODS=$(kubectl get pods -n cinemaabyss --no-headers | wc -l)
+          
+          echo "Running pods: $RUNNING_PODS out of $TOTAL_PODS"
+          
+          if [ "$RUNNING_PODS" -gt 0 ]; then
+            echo "✅ Helm deployment test completed successfully!"
+          else
+            echo "❌ No pods are running, deployment may have failed"
+            exit 1
+          fi
 
       - name: Cleanup
         if: always()

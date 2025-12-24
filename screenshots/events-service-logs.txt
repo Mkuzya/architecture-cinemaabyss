@@ -1,0 +1,2 @@
+=== Events Service Logs ===
+2025/08/15 17:43:51 Starting events service on :8082

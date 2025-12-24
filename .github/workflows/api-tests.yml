@@ -2,9 +2,9 @@ name: API Tests
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, dev ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, dev ]
   workflow_dispatch:
     inputs:
       environment:
@@ -31,39 +31,27 @@ jobs:
 
       - name: Set up Docker Compose
         run: |
-          docker compose --version
+          # Docker Compose V2 is included in ubuntu-latest
+          docker compose version
       
       - name: Start services with Docker Compose
         run: |
+          echo "Starting Docker Compose services..."
           docker compose up -d
-          # Wait for services to be ready
-          echo "Waiting for services to be ready..."
-          sleep 120
+          echo "Services started, waiting for them to be ready..."
+          sleep 60
+          echo "Checking service status..."
+          docker compose ps
+          echo "Waiting for all services to be healthy..."
+          timeout 300 bash -c 'until docker compose ps | grep -q "healthy"; do sleep 10; done'
+          echo "All services are healthy!"
       
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: tests/postman/package-lock.json
-      
-      - name: Install Newman and dependencies
-        working-directory: tests/postman
-        run: npm install
-      
-      - name: Run API tests
-        working-directory: tests/postman
+      - name: Run API tests using Docker
         run: |
-
-          docker compose up -d
-          # Wait for services to be ready
-          echo "Waiting for services to be ready..."
-          sleep 15
-          # Build the Docker image
-          docker build -t cinemaabyss-api-tests .
-          
-          # Run the tests in Docker
-          docker run --network=cinemaabyss-network -v "$(pwd)/reports:/app/reports" cinemaabyss-api-tests
+          echo "Running API tests using Docker test-runner..."
+          # Use the test-runner service that's already configured in docker-compose.yml
+          docker compose up test-runner --exit-code-from test-runner --abort-on-container-exit
+          echo "Tests completed"
         
       
       - name: Stop services
